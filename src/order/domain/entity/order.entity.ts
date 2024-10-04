@@ -9,6 +9,7 @@ import {
 import { Expose } from 'class-transformer';
 
 import { BadRequestException } from '@nestjs/common';
+import { Product } from './product.entity';
 
 export interface CreateOrderCommand {
   items: ItemDetailCommand[];
@@ -28,6 +29,7 @@ export enum OrderStatus {
 
 @Entity()
 export class Order {
+  
   static MAX_ITEMS = 5;
 
   static AMOUNT_MINIMUM = 5;
@@ -224,8 +226,17 @@ export class Order {
     }
 
     const itemsNames = this.orderItems
-      .map((item) => item.productName)
+      .map((item) => item.product)
       .join(', ');
     return `invoice number ${this.id}, with items: ${itemsNames}`;
+  }
+
+  containsProduct(product: Product): boolean {
+    this.orderItems.forEach( orderItem =>{
+      if(orderItem.product.id === product.id){
+        return true;
+      }
+    });
+    return false;
   }
 }
