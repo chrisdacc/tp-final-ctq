@@ -1,7 +1,6 @@
-import { Expose } from 'class-transformer';
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { BadRequestException } from '@nestjs/common';
-import { Order } from './order.entity';
+import { EmailServiceInterface } from '../../application/use-case/email.service.interface';
 
 export interface CreateProduct {
     isActive?: boolean;
@@ -9,6 +8,7 @@ export interface CreateProduct {
     price: number;
     stock?: number;
     description: string;
+    emailService: EmailServiceInterface; 
 }
 
 @Entity()
@@ -32,6 +32,8 @@ export class Product {
     @Column()
     description: string;
 
+    private emailService: EmailServiceInterface; 
+
     constructor(createProduct?: CreateProduct) {
         if (createProduct) {
             this.verifyProductIsValid(createProduct);
@@ -41,6 +43,7 @@ export class Product {
             this.description = createProduct.description;
             this.stock = createProduct.stock ?? 0;
             this.isActive = createProduct.isActive ?? false;
+            this.emailService = createProduct.emailService; 
         }
     }
 
@@ -48,12 +51,6 @@ export class Product {
         if (!createProduct.name || !createProduct.price || !createProduct.description) {
             throw new BadRequestException('Missing required fields');
         }
-    }
-
-    canDelete(): void {
-       // if (this.order) {
-            throw new Error('Cannot delete the product');
-       // }
     }
 
     modify(createProduct: CreateProduct): void {
@@ -69,12 +66,27 @@ export class Product {
     }
 
     decrementQuantity(quantity: number) {
-        if( this.stock === 0 ){
-            throw new Error('Stock of '+ this.name +' is null');
+        if (this.stock === 0) {
+            throw new Error('Stock of ' + this.name + ' is null');
         }
-        if( (this.stock - quantity) <= 0){
+        if ((this.stock - quantity) <= 0) {
             this.stock = 0;
-            
+
+            this.notifyAdmin();
+        } else {
+            this.stock -= quantity; 
         }
-      }
+    }
+
+    private async notifyAdmin() {
+        const adminEmail = 'admin@test.fr';
+        const subject = 'Stock Alert: ' + this.name;
+        const body = `The stock for ${this.name} has reached zero. Please restock.`;
+
+        try {
+            await this.emailService.sendEmail(adminEmail, subject, body);
+        } catch (error) {
+            console.error('Failed to send email:', error);
+        }
+    }
 }
