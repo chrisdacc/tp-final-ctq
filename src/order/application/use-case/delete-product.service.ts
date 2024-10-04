@@ -10,19 +10,13 @@ export class DeleteProductService {
    
 
     async execute(id : string){
-        const product = this.productRepository.findById(id);
+        const product = await this.productRepository.findById(id);
         if(product === null){
             throw new Error('Product not found');
         }
-        const orders = this.orderRepository.findAll();
-        let isOrdered = false;
-        if(orders !== null){
-            (await orders).forEach(async order =>{
-                isOrdered = isOrdered || order.containsProduct(await product);
-            })
-        }
-        if (isOrdered) {
-            throw new Error('Cannot delete product');
+        const orders = await this.orderRepository.findOrdersContainProduct(product);
+        if ((orders).length !== 0){
+            throw new Error('Cannot delete an ordered product');
         }
         return await this.productRepository.deleteProduct(id);
     }

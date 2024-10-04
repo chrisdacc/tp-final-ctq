@@ -1,5 +1,6 @@
 import { InjectDataSource } from '@nestjs/typeorm';
 import { Order } from 'src/order/domain/entity/order.entity';
+import { Product } from 'src/order/domain/entity/product.entity';
 import { OrderRepositoryInterface } from 'src/order/domain/port/persistance/order.repository.interface';
 import { DataSource, Repository } from 'typeorm';
 
@@ -9,6 +10,15 @@ export default class OrderRepositoryTypeOrm
 {
   constructor(@InjectDataSource() private readonly datasource: DataSource) {
     super(Order, datasource.createEntityManager());
+  }
+
+  async findOrdersContainProduct(product: Product): Promise<Order[]> {
+    const queryBuilder = this.createQueryBuilder('order')
+      .innerJoinAndSelect('order.items', 'orderItem')
+      .innerJoinAndSelect('orderItem.product', 'product')
+      .where('product.id = :productId', { productId: product.id });
+
+    return queryBuilder.getMany();
   }
 
   async findById(id: string): Promise<Order | null> {

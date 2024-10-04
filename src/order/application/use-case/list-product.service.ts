@@ -5,16 +5,13 @@ export class ListProductService {
     constructor(private readonly productRepository: ProductRepositoryInterface){}
 
     async execute(isActive : boolean) : Promise<Product[]>{
-        const products = await this.productRepository.findAll();
-        
+        const products = await this.productRepository.findAllByisActive(isActive);
+
         if(!products){
             throw new Error('No products found');
         }
-        const filteredProducts = products.filter(product => product.isActive === isActive);
-        if(filteredProducts.length === 0){
-            throw new Error('No products for the filtered flag isActive = '+ isActive );
-        }
+        
 
-        return filteredProducts;
+        return products;
     }
 }
