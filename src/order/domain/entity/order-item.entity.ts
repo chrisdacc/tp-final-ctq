@@ -15,9 +15,6 @@ export class OrderItem {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
-  product: Product;
-
   @Column({
     type: 'int',
   })
@@ -30,6 +27,9 @@ export class OrderItem {
 
   @ManyToOne(() => Order, (order) => order.orderItems)
   order: Order;
+
+  @ManyToOne(() => Product, product => product.id)
+  product: Product;
 
   constructor(itemCommand: ItemDetailCommand) {
     if (!itemCommand) {

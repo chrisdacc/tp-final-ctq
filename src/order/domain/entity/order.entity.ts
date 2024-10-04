@@ -29,7 +29,7 @@ export enum OrderStatus {
 
 @Entity()
 export class Order {
-  
+
   static MAX_ITEMS = 5;
 
   static AMOUNT_MINIMUM = 5;
@@ -158,25 +158,6 @@ export class Order {
     }
   }
 
-  // methode factory : permet de ne pas utiliser le constructor
-  // car le constructor est utilisé par typeorm
-  // public createOrder(createOrderCommand: CreateOrderCommand): Order {
-  //   this.verifyOrderCommandIsValid(createOrderCommand);
-  //   this.verifyMaxItemIsValid(createOrderCommand);
-
-  //   this.orderItems = createOrderCommand.items.map(
-  //     (item) => new OrderItem(item),
-  //   );
-
-  //   this.customerName = createOrderCommand.customerName;
-  //   this.shippingAddress = createOrderCommand.shippingAddress;
-  //   this.invoiceAddress = createOrderCommand.invoiceAddress;
-  //   this.status = OrderStatus.PENDING;
-  //   this.price = this.calculateOrderAmount(createOrderCommand.items);
-
-  //   return this;
-  // }
-
   private calculateOrderAmount(items: ItemDetailCommand[]): number {
     const totalAmount = items.reduce((sum, item) => sum + item.price, 0);
 
@@ -238,5 +219,22 @@ export class Order {
       }
     });
     return false;
+  }
+
+  canAddItems(){
+    if( this.status !== OrderStatus.PENDING){
+      throw new Error('Cannot add items to the order');
+    }
+    return;
+  }
+
+  addProducts(product: Product, quantity: number){
+    const addedItems = new OrderItem({
+      product: product, 
+      price: product.price, 
+      quantity: quantity
+    });
+    this.orderItems.concat(addedItems);
+    this.price = product.price * quantity;
   }
 }
