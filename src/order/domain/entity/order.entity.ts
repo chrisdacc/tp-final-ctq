@@ -10,6 +10,7 @@ import { Expose } from 'class-transformer';
 
 import { BadRequestException } from '@nestjs/common';
 import { Product } from './product.entity';
+import { Promotion } from './promotion.entity';
 
 export interface CreateOrderCommand {
   items: ItemDetailCommand[];
@@ -87,6 +88,10 @@ export class Order {
   @Column({ nullable: true })
   @Expose({ groups: ['group_orders'] })
   private cancelReason: string | null;
+
+  @Column({ nullable: true })
+  @Expose({ groups: ['group_orders'] })
+  promocode: string | null;
 
   public constructor(createOrderCommand?: CreateOrderCommand) {
     if (!createOrderCommand) {
@@ -236,5 +241,13 @@ export class Order {
     });
     this.orderItems.concat(addedItems);
     this.price = product.price * quantity;
+  }
+
+  addPromotion(promotion : Promotion){
+    if(!promotion){
+      throw new Error('Cannot add promotion');
+    }
+    this.promocode = promotion.code;
+    this.price = this.price - promotion.amount;
   }
 }
